@@ -8,10 +8,80 @@ import { MeshStandardMaterial } from 'three'
 const loadingManager = new THREE.LoadingManager()
 const textureLoader = new THREE.TextureLoader(loadingManager)
 
+const doorAlphaTexture = textureLoader.load('/img/door/alpha.jpg')
+const doorAmbientOcclusionTexture = textureLoader.load(
+  '/img/door/ambientOcclusion.jpg'
+)
+const doorColorTexture = textureLoader.load('/img/door/color.jpg')
+const doorHeightTexture = textureLoader.load('/img/door/height.jpg')
+const doorMetalnessTexture = textureLoader.load('/img/door/metalness.jpg')
+const doorNormalTexture = textureLoader.load('/img/door/normal.jpg')
+const doorRoughnessTexture = textureLoader.load('/img/door/roughness.jpg')
+
+const brickColorTexture = textureLoader.load('/img/bricks/color.jpg')
+const brickAmbientOcclusionTexture = textureLoader.load(
+  '/img/bricks/ambientOcclusion.jpg'
+)
+const brickNormalTexture = textureLoader.load('/img/bricks/normal.jpg')
+const brickRoughnessTexture = textureLoader.load('/img/bricks/roughness.jpg')
+
+const grassColorTexture = textureLoader.load('/img/grass/color.jpg')
+const grassAmbientOcclusionTexture = textureLoader.load(
+  '/img/grass/ambientOcclusion.jpg'
+)
+const grassNormalTexture = textureLoader.load('/img/grass/normal.jpg')
+const grassRoughnessTexture = textureLoader.load('/img/grass/roughness.jpg')
+
+const grassRepeat = 14
+
+grassColorTexture.repeat.set(grassRepeat, grassRepeat)
+grassAmbientOcclusionTexture.repeat.set(grassRepeat, grassRepeat)
+grassNormalTexture.repeat.set(grassRepeat, grassRepeat)
+grassRoughnessTexture.repeat.set(grassRepeat, grassRepeat)
+
+grassColorTexture.wrapS = THREE.RepeatWrapping
+grassAmbientOcclusionTexture.wrapS = THREE.RepeatWrapping
+grassNormalTexture.wrapS = THREE.RepeatWrapping
+grassRoughnessTexture.wrapS = THREE.RepeatWrapping
+
+grassColorTexture.wrapT = THREE.RepeatWrapping
+grassAmbientOcclusionTexture.wrapT = THREE.RepeatWrapping
+grassNormalTexture.wrapT = THREE.RepeatWrapping
+grassRoughnessTexture.wrapT = THREE.RepeatWrapping
+
+// roof textures
+const roofColorTexture = textureLoader.load('/img/roof/color.jpg')
+const roofAmbientOcclusionTexture = textureLoader.load(
+  '/img/roof/ambientOcclusion.jpg'
+)
+const roofNormalTexture = textureLoader.load('/img/roof/normal.jpg')
+const roofRoughnessTexture = textureLoader.load('/img/roof/roughness.jpg')
+const roofHeightTexture = textureLoader.load('/img/roof/height.jpg')
+
+const roofRepeat = 2
+
+roofColorTexture.repeat.set(roofRepeat, roofRepeat)
+roofAmbientOcclusionTexture.repeat.set(roofRepeat, roofRepeat)
+roofNormalTexture.repeat.set(roofRepeat, roofRepeat)
+roofRoughnessTexture.repeat.set(roofRepeat, roofRepeat)
+roofHeightTexture.repeat.set(roofRepeat, roofRepeat)
+
+roofColorTexture.wrapS = THREE.RepeatWrapping
+roofAmbientOcclusionTexture.wrapS = THREE.RepeatWrapping
+roofNormalTexture.wrapS = THREE.RepeatWrapping
+roofRoughnessTexture.wrapS = THREE.RepeatWrapping
+roofHeightTexture.wrapS = THREE.RepeatWrapping
+
+roofColorTexture.wrapT = THREE.RepeatWrapping
+roofAmbientOcclusionTexture.wrapT = THREE.RepeatWrapping
+roofNormalTexture.wrapT = THREE.RepeatWrapping
+roofRoughnessTexture.wrapT = THREE.RepeatWrapping
+roofHeightTexture.wrapT = THREE.RepeatWrapping
+
 // debug
 const params = {
   color: 0x8bc34a,
-  sceneColor: 0x1c2f40,
+  sceneColor: 0x222222,
   spin: () => {
     gsap.to(cube.rotation, {
       y: cube.rotation.y + 2.5 * Math.PI,
@@ -31,13 +101,24 @@ const scene = new THREE.Scene()
 
 // floor
 const floor = new THREE.Mesh(
-  new THREE.PlaneBufferGeometry(20, 20, 100, 100),
-  new THREE.MeshBasicMaterial({ color: 'green' })
+  new THREE.PlaneBufferGeometry(20, 20, 500, 500),
+  new THREE.MeshStandardMaterial({
+    map: grassColorTexture,
+    aoMap: grassAmbientOcclusionTexture,
+    normalMap: grassNormalTexture,
+    // roughnessMap: grassRoughnessTexture,
+  })
 )
+// enable aoMap
+floor.geometry.setAttribute(
+  'uv2',
+  new THREE.Float32BufferAttribute(floor.geometry.attributes.uv.array, 2)
+)
+
 // house
 const house = new THREE.Group()
 
-const houseHeight = 3
+const houseHeight = 2.5
 const houseWidth = 5
 const doorHeight = 2
 
@@ -45,36 +126,71 @@ const doorHeight = 2
 const walls = new THREE.Mesh(
   new THREE.BoxBufferGeometry(houseWidth, houseHeight, houseWidth),
   new THREE.MeshStandardMaterial({
-    color: 0x795548,
-    metalness: 0.4,
-    roughness: 0.1,
+    map: brickColorTexture,
+    aoMap: brickAmbientOcclusionTexture,
+    normalMap: brickNormalTexture,
+    // metalness: 0.3,
+    // roughness: 0.01,
   })
+)
+// enable aoMap
+walls.geometry.setAttribute(
+  'uv2',
+  new THREE.Float32BufferAttribute(walls.geometry.attributes.uv.array, 2)
 )
 walls.position.y = houseHeight / 2
 
 // roof
 const roof = new THREE.Mesh(
-  new THREE.ConeBufferGeometry(4.4, 1, 4, 1),
+  new THREE.ConeBufferGeometry(4.2, 1, 4, 1),
   new THREE.MeshStandardMaterial({
-    color: 0x9e9e9e,
-    metalness: 0.4,
-    roughness: 0.1,
+    map: roofColorTexture,
+    aoMap: roofAmbientOcclusionTexture,
+    // needed for alpha to work
+    transparent: true,
+    displacementMap: roofHeightTexture,
+    displacementScale: 0.1,
+    normalMap: roofNormalTexture,
   })
 )
 
+// enable aoMap
+roof.geometry.setAttribute(
+  'uv2',
+  new THREE.Float32BufferAttribute(roof.geometry.attributes.uv.array, 2)
+)
+
 const AxesHelper = new THREE.AxesHelper(4)
-scene.add(AxesHelper)
+// scene.add(AxesHelper)
 
 roof.position.y = houseHeight + 0.5
 roof.rotation.y = Math.PI / 4
 
 // door
 const door = new THREE.Mesh(
-  new THREE.PlaneBufferGeometry(1.2, doorHeight),
-  new MeshStandardMaterial({ color: 0xaa7b7b })
+  new THREE.PlaneBufferGeometry(doorHeight, doorHeight, 100, 100),
+  new MeshStandardMaterial({
+    map: doorColorTexture,
+    aoMap: doorAmbientOcclusionTexture,
+    // needed for alpha to work
+    transparent: true,
+    alphaMap: doorAlphaTexture,
+    displacementMap: doorHeightTexture,
+    displacementScale: 0.1,
+    normalMap: doorNormalTexture,
+    metalnessMap: doorMetalnessTexture,
+    metalness: 1,
+    roughness: 0.2,
+    // aoMapIntensity: 2,
+  })
 )
-door.translateZ(houseWidth / 2 + 0.001)
-door.translateY(doorHeight / 2)
+// enable aoMap
+door.geometry.setAttribute(
+  'uv2',
+  new THREE.Float32BufferAttribute(door.geometry.attributes.uv.array, 2)
+)
+door.translateZ(houseWidth / 2 + 0.00001)
+door.translateY(doorHeight / 2 - 0.1)
 
 // bushes
 const bushGeometry = new THREE.SphereBufferGeometry(0.6, 16, 16)
@@ -102,7 +218,7 @@ for (let i = 0; i < 40; i++) {
   const x = Math.cos(angle) * radius
   const z = Math.sin(angle) * radius
   const grave = new THREE.Mesh(graveGeometry, graveMaterial)
-  grave.position.set(x, 0.3, z)
+  grave.position.set(x, 0.24, z)
   grave.rotation.z = (0.5 - Math.random()) / 4
   graves.add(grave)
 }
@@ -153,7 +269,8 @@ const controls = new OrbitControls(camera, renderer.domElement)
 controls.enableDamping = true
 controls.update()
 
-camera.position.set(0, 0, 16)
+// camera.position.set(0, 0, 16)
+camera.position.set(0, 0, 5.5)
 scene.add(camera)
 
 window.addEventListener('resize', () => {
@@ -170,16 +287,16 @@ window.addEventListener('resize', () => {
   setRendererPixedRatio()
 })
 
-const ambientLight = new THREE.AmbientLight(0xb9d5ff, 0.15)
-const moonLight = new THREE.PointLight(0xb9d5ff, 0.15)
+const ambientLight = new THREE.AmbientLight(0xb9d5ff, 0.5)
+const moonLight = new THREE.PointLight(0xb9d5ff, 0.3)
 const doorLight = new THREE.PointLight(0xbf6e0a, 1, 7)
-doorLight.position.set(0, doorHeight + 0.4, houseWidth / 2 + 1)
-const doorLightHelper = new THREE.PointLightHelper(doorLight)
+doorLight.position.set(0, doorHeight + 0.2, houseWidth / 2 + 1)
+// const doorLightHelper = new THREE.PointLightHelper(doorLight)
 scene.add(ambientLight, moonLight)
-scene.add(doorLightHelper)
+// scene.add(doorLightHelper)
 house.add(doorLight)
 
-const fog = new THREE.Fog(params.sceneColor, 1, 14)
+const fog = new THREE.Fog(params.sceneColor, 1, 24)
 scene.fog = fog
 
 window.addEventListener('dblclick', () => {
