@@ -130,9 +130,9 @@ plane.receiveShadow = true
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
 // for real light
 const pointLight = new THREE.PointLight(0xffeb3b, 0.5)
-pointLight.position.set(0.5, 1, 0)
+pointLight.position.set(0.5, 4, 0)
 const directionalLight = new THREE.DirectionalLight(params.color, 0.3)
-const pointLightHelper = new THREE.PointLightHelper(pointLight, 0.2)
+const pointLightHelper = new THREE.PointLightHelper(pointLight, 0.3)
 const directionalLightHelper = new THREE.DirectionalLightHelper(
   directionalLight,
   0.2
@@ -140,6 +140,30 @@ const directionalLightHelper = new THREE.DirectionalLightHelper(
 // enable shadows for lights
 directionalLight.castShadow = true
 pointLight.castShadow = true
+
+// optimize shadows
+// make sure size is power of 2 for mipmapping
+pointLight.shadow.mapSize.width = 1024
+pointLight.shadow.mapSize.height = 1024
+directionalLight.shadow.mapSize.width = 1024
+directionalLight.shadow.mapSize.height = 1024
+
+directionalLight.shadow.camera.top = 2
+directionalLight.shadow.camera.right = 2
+directionalLight.shadow.camera.bottom = -2
+directionalLight.shadow.camera.left = -2
+directionalLight.shadow.camera.near = 1
+directionalLight.shadow.camera.far = 4
+
+pointLight.shadow.radius = 40
+directionalLight.shadow.radius = 40
+
+const directionalLightCameraHelper = new THREE.CameraHelper(
+  directionalLight.shadow.camera
+)
+
+scene.add(directionalLightCameraHelper)
+directionalLightCameraHelper.visible = false
 
 scene.add(directionalLightHelper, pointLightHelper)
 const hemisphereLight = new THREE.HemisphereLight(0xff0000, 0x00ff00, 0.3)
@@ -185,6 +209,8 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
 // enable shadows
 renderer.shadowMap.enabled = true
+// soft shadows
+renderer.shadowMap.type = THREE.PCFSoftShadowMap
 
 const setRendererPixedRatio = () => {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
