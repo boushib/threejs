@@ -1,80 +1,17 @@
 import './app.css'
-import {
-  Scene,
-  Mesh,
-  Clock,
-  BoxBufferGeometry,
-  MeshBasicMaterial,
-  PerspectiveCamera,
-  AxesHelper,
-  WebGLRenderer,
-  TextureLoader,
-  LoadingManager,
-  Loader,
-} from 'three'
 import * as THREE from 'three'
 import gsap from 'gsap'
 import * as dat from 'dat.gui'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import { MeshStandardMaterial } from 'three'
 
-const loadingManager = new LoadingManager()
-// loading manager progress
-// loadingManager.onProgress = (p) => {
-//   console.log(`${p}%`)
-// }
-// loadingManager.onLoad = (p) => {
-//   console.log(`${p}%`)
-// }
-
-const textureLoader = new TextureLoader(loadingManager)
-const matcap = textureLoader.load('/img/matcaps/4.png')
-const fontLoader = new THREE.FontLoader()
-fontLoader.load('fonts/syne_extrabold.typeface.json', (font) => {
-  // console.log(font)
-  const geometry = new THREE.TextGeometry('HELLO', {
-    font,
-    // size: 80,
-    size: 0.35,
-    height: 0.2,
-    curveSegments: 12,
-    bevelEnabled: true,
-    bevelThickness: 0.02,
-    bevelSize: 0.02,
-    bevelOffset: 0,
-    bevelSegments: 5,
-  })
-
-  const material = new THREE.MeshMatcapMaterial({ matcap })
-
-  // metalness
-  // material.metalness = 1
-  // material.roughness = 0
-  // material.envMap = envMap
-
-  const text = new THREE.Mesh(geometry, material)
-
-  geometry.center()
-  text.rotation.x = 0.32
-
-  // scene.add(text)
-})
-
-// const baseColorMap = textureLoader.load('/img/wood/base_color.jpg')
-const baseColorMap = textureLoader.load('/img/metal/0/base.jpg')
-const aoMap = textureLoader.load('/img/metal/0/ambientOcclusion.jpg')
-const heightMap = textureLoader.load('/img/wood/height.png')
-
-// baseColorMap.repeat.x = 3
-// baseColorMap.repeat.y = 3
-// baseColorMap.wrapS = THREE.MirroredRepeatWrapping
-// baseColorMap.wrapT = THREE.MirroredRepeatWrapping
-// baseColorMap.wrapS = THREE.RepeatWrapping
-// baseColorMap.wrapT = THREE.RepeatWrapping
-// map.rotation = Math.PI / 18
+const loadingManager = new THREE.LoadingManager()
+const textureLoader = new THREE.TextureLoader(loadingManager)
 
 // debug
 const params = {
   color: 0x8bc34a,
+  sceneColor: 0x1c2f40,
   spin: () => {
     gsap.to(cube.rotation, {
       y: cube.rotation.y + 2.5 * Math.PI,
@@ -88,106 +25,104 @@ const gui = new dat.GUI({ closed: true, width: 300 })
 const canvas = document.getElementById('3d')
 
 // scene
-const scene = new Scene()
-
-// Scene background
-const envMap = new THREE.CubeTextureLoader()
-  .setPath('/img/environment/4/')
-  .load(['px.png', 'nx.png', 'py.png', 'ny.png', 'pz.png', 'nz.png'])
-
-scene.background = envMap
+const scene = new THREE.Scene()
 
 // objects
-const sphereGeometry = new THREE.SphereBufferGeometry(0.5, 32, 32)
-const cubeGeometry = new THREE.BoxBufferGeometry(0.75, 0.75, 0.75)
-const planeGeometry = new THREE.PlaneBufferGeometry(5, 5, 100, 100)
-const material = new THREE.MeshStandardMaterial()
 
-material.metalness = 0.3
-material.roughness = 0.1
-material.envMap = envMap
-
-const sphere = new Mesh(sphereGeometry, material)
-const cube = new Mesh(cubeGeometry, material)
-const plane = new Mesh(planeGeometry, material)
-
-scene.add(sphere, cube, plane)
-
-plane.rotation.x = -Math.PI / 2
-plane.position.y = -1
-
-cube.position.set(1, 0, 0)
-
-scene.rotation.x = 0.1
-
-// enable shadows on objects
-sphere.castShadow = true
-cube.castShadow = true
-plane.receiveShadow = true
-
-// Lights
-// for light bouncing
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
-// for real light
-const pointLight = new THREE.PointLight(0xffeb3b, 0.5)
-pointLight.position.set(0.5, 4, 0)
-const directionalLight = new THREE.DirectionalLight(params.color, 0.3)
-const pointLightHelper = new THREE.PointLightHelper(pointLight, 0.3)
-const directionalLightHelper = new THREE.DirectionalLightHelper(
-  directionalLight,
-  0.2
+// floor
+const floor = new THREE.Mesh(
+  new THREE.PlaneBufferGeometry(20, 20, 100, 100),
+  new THREE.MeshBasicMaterial({ color: 'green' })
 )
-// enable shadows for lights
-directionalLight.castShadow = true
-pointLight.castShadow = true
+// house
+const house = new THREE.Group()
 
-// optimize shadows
-// make sure size is power of 2 for mipmapping
-pointLight.shadow.mapSize.width = 1024
-pointLight.shadow.mapSize.height = 1024
-directionalLight.shadow.mapSize.width = 1024
-directionalLight.shadow.mapSize.height = 1024
+const houseHeight = 3
+const houseWidth = 5
+const doorHeight = 2
 
-directionalLight.shadow.camera.top = 2
-directionalLight.shadow.camera.right = 2
-directionalLight.shadow.camera.bottom = -2
-directionalLight.shadow.camera.left = -2
-directionalLight.shadow.camera.near = 1
-directionalLight.shadow.camera.far = 4
+// walls
+const walls = new THREE.Mesh(
+  new THREE.BoxBufferGeometry(houseWidth, houseHeight, houseWidth),
+  new THREE.MeshStandardMaterial({
+    color: 0x795548,
+    metalness: 0.4,
+    roughness: 0.1,
+  })
+)
+walls.position.y = houseHeight / 2
 
-pointLight.shadow.radius = 40
-directionalLight.shadow.radius = 40
-
-const directionalLightCameraHelper = new THREE.CameraHelper(
-  directionalLight.shadow.camera
+// roof
+const roof = new THREE.Mesh(
+  new THREE.ConeBufferGeometry(4.4, 1, 4, 1),
+  new THREE.MeshStandardMaterial({
+    color: 0x9e9e9e,
+    metalness: 0.4,
+    roughness: 0.1,
+  })
 )
 
-scene.add(directionalLightCameraHelper)
-directionalLightCameraHelper.visible = false
+const AxesHelper = new THREE.AxesHelper(4)
+scene.add(AxesHelper)
 
-scene.add(directionalLightHelper, pointLightHelper)
-const hemisphereLight = new THREE.HemisphereLight(0xff0000, 0x00ff00, 0.3)
-// scene.add(hemisphereLight)
+roof.position.y = houseHeight + 0.5
+roof.rotation.y = Math.PI / 4
 
-scene.add(pointLight, ambientLight, directionalLight, hemisphereLight)
+// door
+const door = new THREE.Mesh(
+  new THREE.PlaneBufferGeometry(1.2, doorHeight),
+  new MeshStandardMaterial({ color: 0xaa7b7b })
+)
+door.translateZ(houseWidth / 2 + 0.001)
+door.translateY(doorHeight / 2)
+
+// bushes
+const bushGeometry = new THREE.SphereBufferGeometry(0.6, 16, 16)
+const bushMaterial = new THREE.MeshStandardMaterial({ color: 0x89c854 })
+
+const bushes = new THREE.Group()
+
+const bush1 = new THREE.Mesh(bushGeometry, bushMaterial)
+bush1.position.set(1.5, 0.2, 3)
+
+const bush2 = new THREE.Mesh(bushGeometry, bushMaterial)
+bush2.scale.set(0.5, 0.5, 0.5)
+bush2.position.set(2.2, 0.1, 2.8)
+
+bushes.add(bush1, bush2)
+
+const graves = new THREE.Group()
+
+const graveGeometry = new THREE.BoxBufferGeometry(0.6, 0.8, 0.2)
+const graveMaterial = new THREE.MeshStandardMaterial({ color: 0xb2b1b6 })
+
+for (let i = 0; i < 40; i++) {
+  const angle = 2 * Math.PI * Math.random()
+  const radius = 4 + 5 * Math.random()
+  const x = Math.cos(angle) * radius
+  const z = Math.sin(angle) * radius
+  const grave = new THREE.Mesh(graveGeometry, graveMaterial)
+  grave.position.set(x, 0.3, z)
+  grave.rotation.z = (0.5 - Math.random()) / 4
+  graves.add(grave)
+}
+
+house.add(walls, roof, door, bushes, graves)
+scene.add(floor, house)
+
+floor.rotation.x = -Math.PI / 2
+floor.position.y = 0
+
+// house.rotation.x = 0.2
 
 // Debug GUI
-const position = gui.addFolder('Position')
-position.add(sphere.position, 'x', 0, 1, 0.01)
-position.add(sphere.position, 'y', 0, 1, 0.01)
-position.add(sphere.position, 'z', 0, 1, 0.01)
-
 const settings = gui.addFolder('Settings')
-// settings.add(material, 'wireframe')
 
 // settings.add(params, 'spin')
 gui.add(params, 'spin')
 settings.addColor(params, 'color').onChange((color) => {
-  material.color.set(color)
+  // material.color.set(color)
 })
-
-// gui.add(material, 'metalness', 0, 1, 0.01)
-// gui.add(material, 'roughness', 0, 1, 0.01)
 
 const canvasSize = {
   width: window.innerWidth,
@@ -195,22 +130,18 @@ const canvasSize = {
 }
 
 // base camera
-const camera = new PerspectiveCamera(
-  70,
+const camera = new THREE.PerspectiveCamera(
+  75,
   canvasSize.width / canvasSize.height,
   0.01,
   100
 )
 
 // renderer
-const renderer = new WebGLRenderer({ canvas })
+const renderer = new THREE.WebGLRenderer({ canvas })
 renderer.setSize(canvasSize.width, canvasSize.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-
-// enable shadows
-renderer.shadowMap.enabled = true
-// soft shadows
-renderer.shadowMap.type = THREE.PCFSoftShadowMap
+renderer.setClearColor(params.sceneColor)
 
 const setRendererPixedRatio = () => {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
@@ -222,15 +153,8 @@ const controls = new OrbitControls(camera, renderer.domElement)
 controls.enableDamping = true
 controls.update()
 
-camera.position.set(0, 0, 3)
-
+camera.position.set(0, 0, 16)
 scene.add(camera)
-
-const clock = new Clock()
-
-// gsap.to(cube.position, { x: 2, duration: 1, delay: 1 })
-// gsap.to(cube.position, { x: -2, duration: 1, delay: 2 })
-// gsap.to(cube.position, { x: 0, duration: 1, delay: 3 })
 
 window.addEventListener('resize', () => {
   canvasSize.width = window.innerWidth
@@ -245,6 +169,18 @@ window.addEventListener('resize', () => {
 
   setRendererPixedRatio()
 })
+
+const ambientLight = new THREE.AmbientLight(0xb9d5ff, 0.15)
+const moonLight = new THREE.PointLight(0xb9d5ff, 0.15)
+const doorLight = new THREE.PointLight(0xbf6e0a, 1, 7)
+doorLight.position.set(0, doorHeight + 0.4, houseWidth / 2 + 1)
+const doorLightHelper = new THREE.PointLightHelper(doorLight)
+scene.add(ambientLight, moonLight)
+scene.add(doorLightHelper)
+house.add(doorLight)
+
+const fog = new THREE.Fog(params.sceneColor, 1, 14)
+scene.fog = fog
 
 window.addEventListener('dblclick', () => {
   const isFullscreen =
@@ -267,9 +203,6 @@ window.addEventListener('dblclick', () => {
 })
 
 const animate = () => {
-  // render
-  const elapsedTime = clock.getElapsedTime()
-
   // update controls
   controls.update()
 
