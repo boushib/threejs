@@ -270,7 +270,7 @@ controls.enableDamping = true
 controls.update()
 
 // camera.position.set(0, 0, 16)
-camera.position.set(0, 0, 5.5)
+camera.position.set(0, 2, 10)
 scene.add(camera)
 
 window.addEventListener('resize', () => {
