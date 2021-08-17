@@ -1,83 +1,18 @@
 import './app.css'
-import {
-  Scene,
-  Mesh,
-  Clock,
-  BoxBufferGeometry,
-  MeshBasicMaterial,
-  PerspectiveCamera,
-  AxesHelper,
-  WebGLRenderer,
-  TextureLoader,
-  LoadingManager,
-  Loader,
-} from 'three'
 import * as THREE from 'three'
 import gsap from 'gsap'
 import * as dat from 'dat.gui'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 
-const loadingManager = new LoadingManager()
-// loading manager progress
-// loadingManager.onProgress = (p) => {
-//   console.log(`${p}%`)
-// }
-// loadingManager.onLoad = (p) => {
-//   console.log(`${p}%`)
-// }
-
-const textureLoader = new TextureLoader(loadingManager)
-const matcap = textureLoader.load('/img/matcaps/4.png')
-const fontLoader = new THREE.FontLoader()
-fontLoader.load('fonts/syne_extrabold.typeface.json', (font) => {
-  // console.log(font)
-  const geometry = new THREE.TextGeometry('HELLO', {
-    font,
-    // size: 80,
-    size: 0.35,
-    height: 0.2,
-    curveSegments: 12,
-    bevelEnabled: true,
-    bevelThickness: 0.02,
-    bevelSize: 0.02,
-    bevelOffset: 0,
-    bevelSegments: 5,
-  })
-
-  const material = new THREE.MeshMatcapMaterial({ matcap })
-
-  // metalness
-  // material.metalness = 1
-  // material.roughness = 0
-  // material.envMap = envMap
-
-  const text = new THREE.Mesh(geometry, material)
-
-  geometry.center()
-  text.rotation.x = 0.32
-
-  // scene.add(text)
-})
-
-// const baseColorMap = textureLoader.load('/img/wood/base_color.jpg')
-const baseColorMap = textureLoader.load('/img/metal/0/base.jpg')
-const aoMap = textureLoader.load('/img/metal/0/ambientOcclusion.jpg')
-const heightMap = textureLoader.load('/img/wood/height.png')
-
-// baseColorMap.repeat.x = 3
-// baseColorMap.repeat.y = 3
-// baseColorMap.wrapS = THREE.MirroredRepeatWrapping
-// baseColorMap.wrapT = THREE.MirroredRepeatWrapping
-// baseColorMap.wrapS = THREE.RepeatWrapping
-// baseColorMap.wrapT = THREE.RepeatWrapping
-// map.rotation = Math.PI / 18
+const loadingManager = new THREE.LoadingManager()
+const textureLoader = new THREE.TextureLoader(loadingManager)
 
 // debug
 const params = {
   color: 0x8bc34a,
   spin: () => {
-    gsap.to(cube.rotation, {
-      y: cube.rotation.y + 2.5 * Math.PI,
+    gsap.to(mesh.rotation, {
+      y: mesh.rotation.y + 2.5 * Math.PI,
       duration: 1.2,
     })
   },
@@ -88,7 +23,7 @@ const gui = new dat.GUI({ closed: true, width: 300 })
 const canvas = document.getElementById('3d')
 
 // scene
-const scene = new Scene()
+const scene = new THREE.Scene()
 
 // Scene background
 const envMap = new THREE.CubeTextureLoader()
@@ -98,40 +33,48 @@ const envMap = new THREE.CubeTextureLoader()
 scene.background = envMap
 
 // objects
-const sphereGeometry = new THREE.SphereBufferGeometry(0.5, 32, 32)
-const cubeGeometry = new THREE.BoxBufferGeometry(0.75, 0.75, 0.75)
-const planeGeometry = new THREE.PlaneBufferGeometry(5, 5, 100, 100)
+const sphereGeometry = new THREE.SphereBufferGeometry(0.75, 32, 32)
+const particlesGeometry = new THREE.BufferGeometry()
+
+const PARTICLES_COUNT = 10000
+
+const positions = new Float32Array(PARTICLES_COUNT * 3)
+for (let i = 0; i < PARTICLES_COUNT * 3; i++) {
+  positions[i] = 10 * (0.5 - Math.random())
+}
+particlesGeometry.setAttribute(
+  'position',
+  new THREE.BufferAttribute(positions, 3)
+)
+
 const material = new THREE.MeshStandardMaterial()
+const particleMaterial = new THREE.PointsMaterial({
+  size: 0.02,
+  sizeAttenuation: true,
+})
+
+const particles = new THREE.Points(particlesGeometry, particleMaterial)
+scene.add(particles)
 
 material.metalness = 0.3
 material.roughness = 0.1
 material.envMap = envMap
 
-const sphere = new Mesh(sphereGeometry, material)
-const cube = new Mesh(cubeGeometry, material)
-const plane = new Mesh(planeGeometry, material)
+const mesh = new THREE.Mesh(sphereGeometry, material)
+//scene.add(mesh)
 
-scene.add(sphere, cube, plane)
-
-plane.rotation.x = -Math.PI / 2
-plane.position.y = -1
-
-cube.position.set(1, 0, 0)
-
-scene.rotation.x = 0.1
-
-// enable shadows on objects
-sphere.castShadow = true
-cube.castShadow = true
-plane.receiveShadow = true
+// Helpers
+const axesHelper = new THREE.AxesHelper()
+scene.add(axesHelper)
 
 // Lights
+
 // for light bouncing
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
 // for real light
-const pointLight = new THREE.PointLight(0xffeb3b, 0.5)
+const pointLight = new THREE.PointLight(0xffeb3b, 0.3)
 pointLight.position.set(0.5, 4, 0)
-const directionalLight = new THREE.DirectionalLight(params.color, 0.3)
+const directionalLight = new THREE.DirectionalLight(params.color, 0.2)
 const pointLightHelper = new THREE.PointLightHelper(pointLight, 0.3)
 const directionalLightHelper = new THREE.DirectionalLightHelper(
   directionalLight,
@@ -164,30 +107,18 @@ const directionalLightCameraHelper = new THREE.CameraHelper(
 
 scene.add(directionalLightCameraHelper)
 directionalLightCameraHelper.visible = false
-
 scene.add(directionalLightHelper, pointLightHelper)
-const hemisphereLight = new THREE.HemisphereLight(0xff0000, 0x00ff00, 0.3)
-// scene.add(hemisphereLight)
-
-scene.add(pointLight, ambientLight, directionalLight, hemisphereLight)
+scene.add(pointLight, ambientLight, directionalLight)
 
 // Debug GUI
 const position = gui.addFolder('Position')
-position.add(sphere.position, 'x', 0, 1, 0.01)
-position.add(sphere.position, 'y', 0, 1, 0.01)
-position.add(sphere.position, 'z', 0, 1, 0.01)
 
 const settings = gui.addFolder('Settings')
-// settings.add(material, 'wireframe')
 
-// settings.add(params, 'spin')
 gui.add(params, 'spin')
 settings.addColor(params, 'color').onChange((color) => {
   material.color.set(color)
 })
-
-// gui.add(material, 'metalness', 0, 1, 0.01)
-// gui.add(material, 'roughness', 0, 1, 0.01)
 
 const canvasSize = {
   width: window.innerWidth,
@@ -195,7 +126,7 @@ const canvasSize = {
 }
 
 // base camera
-const camera = new PerspectiveCamera(
+const camera = new THREE.PerspectiveCamera(
   70,
   canvasSize.width / canvasSize.height,
   0.01,
@@ -203,7 +134,7 @@ const camera = new PerspectiveCamera(
 )
 
 // renderer
-const renderer = new WebGLRenderer({ canvas })
+const renderer = new THREE.WebGLRenderer({ canvas })
 renderer.setSize(canvasSize.width, canvasSize.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
@@ -223,14 +154,9 @@ controls.enableDamping = true
 controls.update()
 
 camera.position.set(0, 0, 3)
-
 scene.add(camera)
 
-const clock = new Clock()
-
-// gsap.to(cube.position, { x: 2, duration: 1, delay: 1 })
-// gsap.to(cube.position, { x: -2, duration: 1, delay: 2 })
-// gsap.to(cube.position, { x: 0, duration: 1, delay: 3 })
+const clock = new THREE.Clock()
 
 window.addEventListener('resize', () => {
   canvasSize.width = window.innerWidth
