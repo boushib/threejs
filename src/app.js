@@ -56,7 +56,7 @@ const roofAmbientOcclusionTexture = textureLoader.load(
 )
 const roofNormalTexture = textureLoader.load('/img/roof/normal.jpg')
 const roofRoughnessTexture = textureLoader.load('/img/roof/roughness.jpg')
-const roofHeightTexture = textureLoader.load('/img/roof/height.jpg')
+const roofHeightTexture = textureLoader.load('/img/roof/height.png')
 
 const roofRepeat = 2
 
@@ -143,6 +143,7 @@ walls.position.y = houseHeight / 2
 // roof
 const roof = new THREE.Mesh(
   new THREE.ConeBufferGeometry(4.2, 1, 4, 1),
+  // new THREE.BoxBufferGeometry(4, 0.1, 4),
   new THREE.MeshStandardMaterial({
     map: roofColorTexture,
     aoMap: roofAmbientOcclusionTexture,
