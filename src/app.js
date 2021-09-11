@@ -6,6 +6,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 
 const loadingManager = new THREE.LoadingManager()
 const textureLoader = new THREE.TextureLoader(loadingManager)
+const particleMap = textureLoader.load('/img/particles/3.png')
 
 // debug
 const params = {
@@ -49,8 +50,11 @@ particlesGeometry.setAttribute(
 
 const material = new THREE.MeshStandardMaterial()
 const particleMaterial = new THREE.PointsMaterial({
-  size: 0.02,
+  size: 0.03,
   sizeAttenuation: true,
+  color: params.color,
+  transparent: true,
+  alphaMap: particleMap,
 })
 
 const particles = new THREE.Points(particlesGeometry, particleMaterial)
