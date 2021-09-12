@@ -3,10 +3,37 @@ import * as THREE from 'three'
 import gsap from 'gsap'
 import * as dat from 'dat.gui'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 
 const loadingManager = new THREE.LoadingManager()
 const textureLoader = new THREE.TextureLoader(loadingManager)
-const particleMap = textureLoader.load('/img/particles/3.png')
+const glTFLoader = new GLTFLoader()
+let mixer = null
+glTFLoader.load(
+  // '/models/FlightHelmet/glTF/FlightHelmet.gltf',
+  '/models/Fox/glTF/Fox.gltf',
+  // '/models/Badges/knight.gltf',
+  (model) => {
+    console.log('model loaded: ', model)
+    // const children = [...model.scene.children]
+    // for (const c of children) {
+    //   scene.add(c)
+    // }
+    mixer = new THREE.AnimationMixer(model.scene)
+    const action = mixer.clipAction(model.animations[1])
+    action.play()
+    const SCALE = 0.02
+    model.scene.scale.set(SCALE, SCALE, SCALE)
+    scene.add(model.scene)
+  },
+  () => {
+    console.log('loading model..')
+  },
+  () => {
+    console.log('error loading model!')
+  }
+)
+// const particleMap = textureLoader.load('/img/particles/3.png')
 
 // debug
 const params = {
@@ -33,39 +60,11 @@ const envMap = new THREE.CubeTextureLoader()
 
 scene.background = envMap
 
-// objects
-const sphereGeometry = new THREE.SphereBufferGeometry(0.75, 32, 32)
-const particlesGeometry = new THREE.BufferGeometry()
-
-const PARTICLES_COUNT = 10000
-
-const positions = new Float32Array(PARTICLES_COUNT * 3)
-for (let i = 0; i < PARTICLES_COUNT * 3; i++) {
-  positions[i] = 10 * (0.5 - Math.random())
-}
-particlesGeometry.setAttribute(
-  'position',
-  new THREE.BufferAttribute(positions, 3)
-)
-
 const material = new THREE.MeshStandardMaterial()
-const particleMaterial = new THREE.PointsMaterial({
-  size: 0.03,
-  sizeAttenuation: true,
-  color: params.color,
-  transparent: true,
-  alphaMap: particleMap,
-})
 
-const particles = new THREE.Points(particlesGeometry, particleMaterial)
-scene.add(particles)
-
-material.metalness = 0.3
-material.roughness = 0.1
+// material.metalness = 0.3
+// material.roughness = 0.1
 material.envMap = envMap
-
-const mesh = new THREE.Mesh(sphereGeometry, material)
-//scene.add(mesh)
 
 // Helpers
 const axesHelper = new THREE.AxesHelper()
@@ -76,8 +75,9 @@ scene.add(axesHelper)
 // for light bouncing
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
 // for real light
-const pointLight = new THREE.PointLight(0xffeb3b, 0.3)
-pointLight.position.set(0.5, 4, 0)
+// const pointLight = new THREE.PointLight(0xffeb3b, 0.3)
+const pointLight = new THREE.PointLight(0xffffff, 0.3)
+pointLight.position.set(0.5, 8, 0)
 const directionalLight = new THREE.DirectionalLight(params.color, 0.2)
 const pointLightHelper = new THREE.PointLightHelper(pointLight, 0.3)
 const directionalLightHelper = new THREE.DirectionalLightHelper(
@@ -131,7 +131,7 @@ const canvasSize = {
 
 // base camera
 const camera = new THREE.PerspectiveCamera(
-  70,
+  50,
   canvasSize.width / canvasSize.height,
   0.01,
   100
@@ -157,7 +157,7 @@ const controls = new OrbitControls(camera, renderer.domElement)
 controls.enableDamping = true
 controls.update()
 
-camera.position.set(0, 0, 3)
+camera.position.set(0, 3, 3)
 scene.add(camera)
 
 const clock = new THREE.Clock()
@@ -195,13 +195,19 @@ window.addEventListener('dblclick', () => {
     }
   }
 })
-
+let prevTime = 0
 const animate = () => {
   // render
   const elapsedTime = clock.getElapsedTime()
+  const deltaTime = elapsedTime - prevTime
 
   // update controls
   controls.update()
+
+  // update animation mixer
+  if (mixer) {
+    mixer.update(0.01)
+  }
 
   // Call animate again on the next frame
   window.requestAnimationFrame(animate)
