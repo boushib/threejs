@@ -1,21 +1,26 @@
 # Three.js
+This is just me learning `WebGL` & `three.js`
 
 ## Dependencies
 
 - Node.js
 
-```bash
+## Dev Environment
+
+Install dependencies
+
+```text
 yarn
-# or
-npm install
+```
 
-# Run the local server at localhost:8080
+Run the dev server at localhost:8080
+
+```text
 yarn dev
-# or
-npm run dev
+```
 
-# Build for production in the dist/ folder
+Build the app for production in the dist/ folder
+
+```text
 yarn build
-# or
-npm run build
 ```
